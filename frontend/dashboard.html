@@ -1334,6 +1334,18 @@
       t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), 3000);
     }
+
+    // Auto-fill from registration flow
+    const pendingKey = sessionStorage.getItem('_as_pending_key');
+    const pendingUrl = sessionStorage.getItem('_as_pending_url');
+    if (pendingKey) {
+      document.getElementById('apiKeyInput').value = pendingKey;
+      sessionStorage.removeItem('_as_pending_key');
+    }
+    if (pendingUrl) {
+      document.getElementById('apiUrlInput').value = pendingUrl;
+      sessionStorage.removeItem('_as_pending_url');
+    }
   </script>
 </body>
 
