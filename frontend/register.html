@@ -1,12 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AppScope — Get Started</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     :root {
       --white: #FFFFFF;
@@ -47,7 +55,7 @@
       border-radius: 16px;
       border: 1px solid var(--slate-200);
       overflow: hidden;
-      box-shadow: 0 4px 40px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 40px rgba(0, 0, 0, 0.08);
       min-height: 580px;
     }
 
@@ -65,8 +73,10 @@
     .left::before {
       content: '';
       position: absolute;
-      top: -80px; right: -80px;
-      width: 300px; height: 300px;
+      top: -80px;
+      right: -80px;
+      width: 300px;
+      height: 300px;
       background: var(--indigo);
       border-radius: 50%;
       opacity: 0.15;
@@ -75,8 +85,10 @@
     .left::after {
       content: '';
       position: absolute;
-      bottom: -60px; left: -60px;
-      width: 200px; height: 200px;
+      bottom: -60px;
+      left: -60px;
+      width: 200px;
+      height: 200px;
       background: var(--indigo);
       border-radius: 50%;
       opacity: 0.1;
@@ -91,13 +103,19 @@
     }
 
     .logo-icon {
-      width: 36px; height: 36px;
+      width: 36px;
+      height: 36px;
       background: var(--indigo);
       border-radius: 9px;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .logo-icon svg { width: 20px; height: 20px; }
+    .logo-icon svg {
+      width: 20px;
+      height: 20px;
+    }
 
     .logo-name {
       font-size: 17px;
@@ -140,14 +158,21 @@
     }
 
     .feature-dot {
-      width: 20px; height: 20px;
+      width: 20px;
+      height: 20px;
       background: rgba(79, 70, 229, 0.3);
       border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
     }
 
-    .feature-dot svg { width: 11px; height: 11px; color: var(--indigo-mid); }
+    .feature-dot svg {
+      width: 11px;
+      height: 11px;
+      color: var(--indigo-mid);
+    }
 
     .feature-text {
       font-size: 13px;
@@ -209,7 +234,9 @@
       transition: all 0.15s;
     }
 
-    .input::placeholder { color: var(--slate-400); }
+    .input::placeholder {
+      color: var(--slate-400);
+    }
 
     .input:focus {
       border-color: var(--indigo);
@@ -246,19 +273,30 @@
       gap: 8px;
     }
 
-    .btn-submit:hover { background: #4338CA; }
-    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-submit:hover {
+      background: #4338CA;
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
 
     .spinner {
-      width: 15px; height: 15px;
-      border: 2px solid rgba(255,255,255,0.3);
+      width: 15px;
+      height: 15px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
       border-top-color: white;
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
       display: none;
     }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
 
     .error-msg {
       background: var(--rose-light);
@@ -288,7 +326,9 @@
       text-decoration: none;
     }
 
-    .login-link a:hover { text-decoration: underline; }
+    .login-link a:hover {
+      text-decoration: underline;
+    }
 
     /* ── Success State ── */
     .success-panel {
@@ -297,14 +337,21 @@
     }
 
     .success-icon {
-      width: 56px; height: 56px;
+      width: 56px;
+      height: 56px;
       background: var(--green-light);
       border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       margin: 0 auto 20px;
     }
 
-    .success-icon svg { width: 28px; height: 28px; color: var(--green); }
+    .success-icon svg {
+      width: 28px;
+      height: 28px;
+      color: var(--green);
+    }
 
     .success-title {
       font-size: 20px;
@@ -365,8 +412,14 @@
       margin-bottom: 12px;
     }
 
-    .btn-copy:hover { background: var(--slate-50); }
-    .btn-copy svg { width: 14px; height: 14px; }
+    .btn-copy:hover {
+      background: var(--slate-50);
+    }
+
+    .btn-copy svg {
+      width: 14px;
+      height: 14px;
+    }
 
     .btn-dashboard {
       width: 100%;
@@ -386,8 +439,14 @@
       gap: 7px;
     }
 
-    .btn-dashboard:hover { background: #4338CA; }
-    .btn-dashboard svg { width: 14px; height: 14px; }
+    .btn-dashboard:hover {
+      background: #4338CA;
+    }
+
+    .btn-dashboard svg {
+      width: 14px;
+      height: 14px;
+    }
 
     .warning-note {
       font-size: 12px;
@@ -396,224 +455,248 @@
       line-height: 1.5;
     }
 
-    .warning-note strong { color: var(--slate-600); }
+    .warning-note strong {
+      color: var(--slate-600);
+    }
   </style>
 </head>
+
 <body>
 
-<div class="page">
+  <div class="page">
 
-  <!-- Left Panel -->
-  <div class="left">
-    <div class="left-logo">
-      <div class="logo-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
-          <path d="M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>
-        </svg>
+    <!-- Left Panel -->
+    <div class="left">
+      <div class="left-logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+            <path d="M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
+          </svg>
+        </div>
+        <span class="logo-name">AppScope</span>
       </div>
-      <span class="logo-name">AppScope</span>
+
+      <div class="left-content">
+        <div class="left-headline">The brain behind your app's growth</div>
+        <div class="left-sub">Stop guessing why users leave. AppScope watches your app's behavior and tells you exactly
+          what to fix.</div>
+
+        <div class="feature-list">
+          <div class="feature-item">
+            <div class="feature-dot">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <span class="feature-text">One script tag — tracks everything automatically</span>
+          </div>
+          <div class="feature-item">
+            <div class="feature-dot">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <span class="feature-text">AI flags churn risks before users disappear</span>
+          </div>
+          <div class="feature-item">
+            <div class="feature-dot">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <span class="feature-text">Plain English insights — no analyst needed</span>
+          </div>
+          <div class="feature-item">
+            <div class="feature-dot">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <span class="feature-text">Onboarding funnel analysis out of the box</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="left-footer">Free during beta · No credit card required</div>
     </div>
 
-    <div class="left-content">
-      <div class="left-headline">The brain behind your app's growth</div>
-      <div class="left-sub">Stop guessing why users leave. AppScope watches your app's behavior and tells you exactly what to fix.</div>
+    <!-- Right Panel -->
+    <div class="right">
 
-      <div class="feature-list">
-        <div class="feature-item">
-          <div class="feature-dot">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <span class="feature-text">One script tag — tracks everything automatically</span>
+      <!-- Registration Form -->
+      <div id="formPanel">
+        <div class="form-title">Create your account</div>
+        <div class="form-sub">Get your API key and start tracking in minutes.</div>
+
+        <div class="input-group">
+          <label class="input-label">Your name</label>
+          <input class="input" id="nameInput" type="text" placeholder="Glen Modiba" autocomplete="name" />
         </div>
-        <div class="feature-item">
-          <div class="feature-dot">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <span class="feature-text">AI flags churn risks before users disappear</span>
+
+        <div class="input-group">
+          <label class="input-label">Email address</label>
+          <input class="input" id="emailInput" type="email" placeholder="you@yourapp.com" autocomplete="email" />
         </div>
-        <div class="feature-item">
-          <div class="feature-dot">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <span class="feature-text">Plain English insights — no analyst needed</span>
+
+        <div class="input-group">
+          <label class="input-label">App name</label>
+          <input class="input" id="appNameInput" type="text" placeholder="My SaaS App" />
+          <div class="input-hint">The name of the app you want to track.</div>
         </div>
-        <div class="feature-item">
-          <div class="feature-dot">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <span class="feature-text">Onboarding funnel analysis out of the box</span>
+
+        <button class="btn-submit" id="submitBtn" onclick="register()">
+          <div class="spinner" id="spinner"></div>
+          <span id="btnText">Create account & get API key</span>
+        </button>
+
+        <div class="error-msg" id="errorMsg"></div>
+
+        <div class="divider"></div>
+
+        <div class="login-link">
+          Already have an account? <a href="dashboard.html">Open dashboard →</a>
         </div>
       </div>
-    </div>
 
-    <div class="left-footer">Free during beta · No credit card required</div>
+      <!-- Success State -->
+      <div class="success-panel" id="successPanel">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+        <div class="success-title">You're in. 🎉</div>
+        <div class="success-sub">Your account is ready. Copy your API key below and drop it into your app.</div>
+
+        <div class="api-key-box">
+          <div class="api-key-label">Your API Key</div>
+          <div class="api-key-value" id="apiKeyDisplay">—</div>
+        </div>
+
+        <button class="btn-copy" onclick="copyKey()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </svg>
+          <span id="copyBtnText">Copy API key</span>
+        </button>
+
+        <button class="btn-dashboard" onclick="goToDashboard()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+          </svg>
+          Open dashboard
+        </button>
+
+        <div class="warning-note">
+          <strong>Save your API key.</strong> You'll need it to connect your app and access your dashboard. Treat it
+          like a password.
+        </div>
+      </div>
+
+    </div>
   </div>
 
-  <!-- Right Panel -->
-  <div class="right">
+  <script>
+    // ── Config ────────────────────────────────────────────────────────────────────
+    const BASE_URL = 'https://appscope-h6mz.onrender.com'; // your Render URL
+    let generatedApiKey = '';
 
-    <!-- Registration Form -->
-    <div id="formPanel">
-      <div class="form-title">Create your account</div>
-      <div class="form-sub">Get your API key and start tracking in minutes.</div>
+    // ── Register ──────────────────────────────────────────────────────────────────
+    async function register() {
+      const name = document.getElementById('nameInput').value.trim();
+      const email = document.getElementById('emailInput').value.trim();
+      const appName = document.getElementById('appNameInput').value.trim();
 
-      <div class="input-group">
-        <label class="input-label">Your name</label>
-        <input class="input" id="nameInput" type="text" placeholder="Glen Modiba" autocomplete="name" />
-      </div>
+      // Basic validation
+      clearErrors();
+      let valid = true;
 
-      <div class="input-group">
-        <label class="input-label">Email address</label>
-        <input class="input" id="emailInput" type="email" placeholder="you@yourapp.com" autocomplete="email" />
-      </div>
+      if (!name) { markError('nameInput', 'Please enter your name.'); valid = false; }
+      if (!email || !email.includes('@')) { markError('emailInput', 'Please enter a valid email.'); valid = false; }
+      if (!appName) { markError('appNameInput', 'Please enter your app name.'); valid = false; }
+      if (!valid) return;
 
-      <div class="input-group">
-        <label class="input-label">App name</label>
-        <input class="input" id="appNameInput" type="text" placeholder="My SaaS App" />
-        <div class="input-hint">The name of the app you want to track.</div>
-      </div>
+      setLoading(true);
 
-      <button class="btn-submit" id="submitBtn" onclick="register()">
-        <div class="spinner" id="spinner"></div>
-        <span id="btnText">Create account & get API key</span>
-      </button>
+      try {
+        const res = await fetch(`${BASE_URL}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, app_name: appName }),
+        });
 
-      <div class="error-msg" id="errorMsg"></div>
+        const data = await res.json();
 
-      <div class="divider"></div>
+        if (!res.ok) {
+          showError(data.detail || 'Something went wrong. Please try again.');
+          setLoading(false);
+          return;
+        }
 
-      <div class="login-link">
-        Already have an account? <a href="dashboard.html">Open dashboard →</a>
-      </div>
-    </div>
+        // Success
+        generatedApiKey = data.api_key;
+        document.getElementById('apiKeyDisplay').textContent = data.api_key;
+        document.getElementById('formPanel').style.display = 'none';
+        document.getElementById('successPanel').style.display = 'block';
 
-    <!-- Success State -->
-    <div class="success-panel" id="successPanel">
-      <div class="success-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-      </div>
-      <div class="success-title">You're in. 🎉</div>
-      <div class="success-sub">Your account is ready. Copy your API key below and drop it into your app.</div>
-
-      <div class="api-key-box">
-        <div class="api-key-label">Your API Key</div>
-        <div class="api-key-value" id="apiKeyDisplay">—</div>
-      </div>
-
-      <button class="btn-copy" onclick="copyKey()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        <span id="copyBtnText">Copy API key</span>
-      </button>
-
-      <button class="btn-dashboard" onclick="goToDashboard()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-        Open dashboard
-      </button>
-
-      <div class="warning-note">
-        <strong>Save your API key.</strong> You'll need it to connect your app and access your dashboard. Treat it like a password.
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<script>
-  // ── Config ────────────────────────────────────────────────────────────────────
-  const BASE_URL = 'https://appscope-api.onrender.com'; // your Render URL
-  let generatedApiKey = '';
-
-  // ── Register ──────────────────────────────────────────────────────────────────
-  async function register() {
-    const name = document.getElementById('nameInput').value.trim();
-    const email = document.getElementById('emailInput').value.trim();
-    const appName = document.getElementById('appNameInput').value.trim();
-
-    // Basic validation
-    clearErrors();
-    let valid = true;
-
-    if (!name) { markError('nameInput', 'Please enter your name.'); valid = false; }
-    if (!email || !email.includes('@')) { markError('emailInput', 'Please enter a valid email.'); valid = false; }
-    if (!appName) { markError('appNameInput', 'Please enter your app name.'); valid = false; }
-    if (!valid) return;
-
-    setLoading(true);
-
-    try {
-      const res = await fetch(`${BASE_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, app_name: appName }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        showError(data.detail || 'Something went wrong. Please try again.');
+      } catch (e) {
+        showError('Could not connect to the server. Please try again.');
         setLoading(false);
-        return;
       }
-
-      // Success
-      generatedApiKey = data.api_key;
-      document.getElementById('apiKeyDisplay').textContent = data.api_key;
-      document.getElementById('formPanel').style.display = 'none';
-      document.getElementById('successPanel').style.display = 'block';
-
-    } catch (e) {
-      showError('Could not connect to the server. Please try again.');
-      setLoading(false);
     }
-  }
 
-  // ── Copy API key ──────────────────────────────────────────────────────────────
-  function copyKey() {
-    navigator.clipboard.writeText(generatedApiKey).then(() => {
-      const btn = document.getElementById('copyBtnText');
-      btn.textContent = 'Copied!';
-      setTimeout(() => btn.textContent = 'Copy API key', 2000);
+    // ── Copy API key ──────────────────────────────────────────────────────────────
+    function copyKey() {
+      navigator.clipboard.writeText(generatedApiKey).then(() => {
+        const btn = document.getElementById('copyBtnText');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy API key', 2000);
+      });
+    }
+
+    // ── Go to dashboard ───────────────────────────────────────────────────────────
+    function goToDashboard() {
+      // Store key temporarily so dashboard can pre-fill it
+      sessionStorage.setItem('_as_pending_key', generatedApiKey);
+      sessionStorage.setItem('_as_pending_url', BASE_URL);
+      window.location.href = 'dashboard.html';
+    }
+
+    // ── UI helpers ────────────────────────────────────────────────────────────────
+    function setLoading(loading) {
+      document.getElementById('spinner').style.display = loading ? 'block' : 'none';
+      document.getElementById('btnText').textContent = loading ? 'Creating account...' : 'Create account & get API key';
+      document.getElementById('submitBtn').disabled = loading;
+    }
+
+    function markError(inputId, message) {
+      document.getElementById(inputId).classList.add('error');
+      showError(message);
+    }
+
+    function showError(message) {
+      const el = document.getElementById('errorMsg');
+      el.textContent = message;
+      el.style.display = 'block';
+    }
+
+    function clearErrors() {
+      document.getElementById('errorMsg').style.display = 'none';
+      document.querySelectorAll('.input').forEach(i => i.classList.remove('error'));
+    }
+
+    // ── Pre-fill from sessionStorage if coming back ───────────────────────────────
+    window.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') register();
     });
-  }
-
-  // ── Go to dashboard ───────────────────────────────────────────────────────────
-  function goToDashboard() {
-    // Store key temporarily so dashboard can pre-fill it
-    sessionStorage.setItem('_as_pending_key', generatedApiKey);
-    sessionStorage.setItem('_as_pending_url', BASE_URL);
-    window.location.href = 'dashboard.html';
-  }
-
-  // ── UI helpers ────────────────────────────────────────────────────────────────
-  function setLoading(loading) {
-    document.getElementById('spinner').style.display = loading ? 'block' : 'none';
-    document.getElementById('btnText').textContent = loading ? 'Creating account...' : 'Create account & get API key';
-    document.getElementById('submitBtn').disabled = loading;
-  }
-
-  function markError(inputId, message) {
-    document.getElementById(inputId).classList.add('error');
-    showError(message);
-  }
-
-  function showError(message) {
-    const el = document.getElementById('errorMsg');
-    el.textContent = message;
-    el.style.display = 'block';
-  }
-
-  function clearErrors() {
-    document.getElementById('errorMsg').style.display = 'none';
-    document.querySelectorAll('.input').forEach(i => i.classList.remove('error'));
-  }
-
-  // ── Pre-fill from sessionStorage if coming back ───────────────────────────────
-  window.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') register();
-  });
-</script>
+  </script>
 
 </body>
+
 </html>
