@@ -1,0 +1,308 @@
+from urllib import response
+
+from fastapi import APIRouter, Depends, HTTPException, Header
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+from app.database import get_db
+from app.models.models import App, Insight
+from datetime import datetime, timezone
+import httpx
+import os
+
+router = APIRouter(prefix="/insights", tags=["Insights"])
+
+
+# ── Auth helper ───────────────────────────────────────────────────────────────
+
+def get_app(api_key: str, db: Session):
+    app = db.query(App).filter(
+        App.api_key == api_key,
+        App.is_active == True
+    ).first()
+    if not app:
+        raise HTTPException(
+            status_code=401, detail="Invalid or inactive API key")
+    return app
+
+
+# ── Pattern 1: Churn Risk ─────────────────────────────────────────────────────
+# Users who have not returned in 7+ days and never completed onboarding
+
+def detect_churn_risk(db: Session, app_id):
+    result = db.execute(text("""
+        SELECT
+            user_id,
+            first_seen,
+            last_seen,
+            session_count,
+            onboarding_completed,
+            onboarding_step_reached,
+            days_since_last_session
+        FROM tracked_users
+        WHERE app_id = :app_id
+          AND onboarding_completed = false
+          AND last_seen < NOW() - INTERVAL '7 days'
+        ORDER BY last_seen ASC
+        LIMIT 100
+    """), {"app_id": str(app_id)})
+    return result.mappings().all()
+
+
+# ── Pattern 2: Dead Features ──────────────────────────────────────────────────
+# Features that appear in events but are used by less than 5% of users
+
+def detect_dead_features(db: Session, app_id):
+    result = db.execute(text("""
+        WITH total_users AS (
+            SELECT COUNT(DISTINCT user_id) as total
+            FROM tracked_users
+            WHERE app_id = :app_id
+        ),
+        feature_usage AS (
+            SELECT
+                properties->>'feature' as feature,
+                COUNT(DISTINCT tracked_user_id) as user_count
+            FROM events
+            WHERE app_id = :app_id
+              AND properties->>'feature' IS NOT NULL
+            GROUP BY properties->>'feature'
+        )
+        SELECT
+            f.feature,
+            f.user_count,
+            t.total as total_users,
+            ROUND((f.user_count::decimal / NULLIF(t.total, 0)) * 100, 2) as usage_pct
+        FROM feature_usage f
+        CROSS JOIN total_users t
+        WHERE (f.user_count::decimal / NULLIF(t.total, 0)) < 0.05
+        ORDER BY usage_pct ASC
+    """), {"app_id": str(app_id)})
+    return result.mappings().all()
+
+
+# ── Pattern 3: Friction Points ────────────────────────────────────────────────
+# Pages where sessions end within 60 seconds of arriving
+
+def detect_friction_points(db: Session, app_id):
+    result = db.execute(text("""
+        SELECT
+            exit_page,
+            COUNT(*) as session_exits,
+            AVG(duration_seconds) as avg_session_duration
+        FROM sessions
+        WHERE app_id = :app_id
+          AND duration_seconds <= 60
+          AND exit_page IS NOT NULL
+        GROUP BY exit_page
+        ORDER BY session_exits DESC
+        LIMIT 10
+    """), {"app_id": str(app_id)})
+    return result.mappings().all()
+
+
+# ── Pattern 4: Onboarding Drop-off ───────────────────────────────────────────
+# Which onboarding step loses the most users
+
+def detect_onboarding_dropoff(db: Session, app_id):
+    result = db.execute(text("""
+        SELECT
+            onboarding_step_reached,
+            COUNT(*) as users_stopped_here
+        FROM tracked_users
+        WHERE app_id = :app_id
+          AND onboarding_completed = false
+          AND onboarding_step_reached > 0
+        GROUP BY onboarding_step_reached
+        ORDER BY onboarding_step_reached ASC
+    """), {"app_id": str(app_id)})
+    return result.mappings().all()
+
+
+# ── AI Narration ──────────────────────────────────────────────────────────────
+# Takes raw pattern data, returns plain English insight via Claude API
+
+async def narrate_with_ai(pattern_type: str, raw_data: list) -> str:
+    if not raw_data:
+        return None
+
+    prompts = {
+        "churn_risk": f"""
+            You are an AI product analyst. Based on this user behavior data, write a 
+            concise, plain English insight (2-3 sentences max) for an app founder.
+            Be specific, actionable, and direct. No fluff.
+            
+            Pattern: Users who never completed onboarding and haven't returned in 7+ days.
+            Data: {raw_data}
+            
+            Format: Start with the key finding, then give one specific recommendation.
+        """,
+        "dead_features": f"""
+            You are an AI product analyst. Based on this feature usage data, write a 
+            concise, plain English insight (2-3 sentences max) for an app founder.
+            Be specific, actionable, and direct. No fluff.
+            
+            Pattern: Features with very low adoption rates.
+            Data: {raw_data}
+            
+            Format: Start with the key finding, then give one specific recommendation.
+        """,
+        "friction_points": f"""
+            You are an AI product analyst. Based on this session data, write a 
+            concise, plain English insight (2-3 sentences max) for an app founder.
+            Be specific, actionable, and direct. No fluff.
+            
+            Pattern: Pages where users leave within 60 seconds.
+            Data: {raw_data}
+            
+            Format: Start with the key finding, then give one specific recommendation.
+        """,
+        "onboarding_dropoff": f"""
+            You are an AI product analyst. Based on this onboarding data, write a 
+            concise, plain English insight (2-3 sentences max) for an app founder.
+            Be specific, actionable, and direct. No fluff.
+            
+            Pattern: Onboarding steps where users stop and never complete setup.
+            Data: {raw_data}
+            
+            Format: Start with the key finding, then give one specific recommendation.
+        """
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "Content-Type": "application/json",
+                "x-api-key": os.getenv("ANTHROPIC_API_KEY"),
+                "anthropic-version": "2023-06-01"
+            },
+            json={
+                "model": "claude-sonnet-4-6",
+                "max_tokens": 1000,
+                "messages": [
+                    {"role": "user", "content": prompts[pattern_type]}
+                ]
+            },
+            timeout=30.0
+        )
+
+    data = response.json()
+
+    if "content" not in data:
+        print(f"Claude API error: {data}")
+        # Fallback: generate a basic insight without AI
+        fallbacks = {
+            "churn_risk": f"{len(raw_data)} users never completed onboarding and haven't returned in 7+ days. Consider sending a re-engagement email or simplifying your onboarding flow.",
+            "dead_features": f"{len(raw_data)} features have very low adoption (under 5% of users). Consider removing or redesigning them to reduce UI clutter.",
+            "friction_points": f"{len(raw_data)} pages are causing users to leave within 60 seconds. Review these pages for confusing layouts or slow load times.",
+            "onboarding_dropoff": f"Users are dropping off during onboarding. Review the steps with the highest abandonment and simplify or remove them.",
+        }
+        return fallbacks.get(pattern_type, "Pattern detected but AI narration unavailable.")
+
+    return data["content"][0]["text"]
+
+# ── Main endpoint: run all patterns + generate insights ───────────────────────
+
+
+@router.post("/analyze", status_code=201)
+async def analyze(
+    x_api_key: str = Header(...),
+    db: Session = Depends(get_db)
+):
+    app = get_app(x_api_key, db)
+
+    patterns = {
+        "churn_risk": detect_churn_risk(db, app.id),
+        "dead_features": detect_dead_features(db, app.id),
+        "friction_points": detect_friction_points(db, app.id),
+        "onboarding_dropoff": detect_onboarding_dropoff(db, app.id),
+    }
+
+    severity_map = {
+        "churn_risk": "critical",
+        "friction_points": "critical",
+        "onboarding_dropoff": "warning",
+        "dead_features": "info",
+    }
+
+    titles = {
+        "churn_risk": "Churn Risk Detected",
+        "dead_features": "Low Adoption Features",
+        "friction_points": "Friction Points Found",
+        "onboarding_dropoff": "Onboarding Drop-off",
+    }
+
+    generated = []
+
+    for pattern_type, raw_data in patterns.items():
+        raw_list = [dict(row) for row in raw_data]
+        if not raw_list:
+            continue
+
+        # Convert non-serializable types
+        from decimal import Decimal
+        for item in raw_list:
+            for k, v in item.items():
+                if isinstance(v, datetime):
+                    item[k] = v.isoformat()
+                elif isinstance(v, Decimal):
+                    item[k] = float(v)
+
+        ai_body = await narrate_with_ai(pattern_type, raw_list)
+        if not ai_body:
+            continue
+
+        insight = Insight(
+            app_id=app.id,
+            insight_type=pattern_type,
+            severity=severity_map[pattern_type],
+            title=titles[pattern_type],
+            body=ai_body,
+            raw_data=raw_list,
+        )
+        db.add(insight)
+        generated.append({
+            "type": pattern_type,
+            "severity": severity_map[pattern_type],
+            "title": titles[pattern_type],
+            "body": ai_body,
+        })
+
+    db.commit()
+
+    return {
+        "status": "ok",
+        "insights_generated": len(generated),
+        "insights": generated
+    }
+
+
+# ── Fetch stored insights ─────────────────────────────────────────────────────
+
+@router.get("/")
+def get_insights(
+    x_api_key: str = Header(...),
+    db: Session = Depends(get_db)
+):
+    app = get_app(x_api_key, db)
+
+    insights = db.query(Insight).filter(
+        Insight.app_id == app.id
+    ).order_by(Insight.created_at.desc()).all()
+
+    return {
+        "status": "ok",
+        "total": len(insights),
+        "insights": [
+            {
+                "id": str(i.id),
+                "type": i.insight_type,
+                "severity": i.severity,
+                "title": i.title,
+                "body": i.body,
+                "is_read": i.is_read,
+                "created_at": i.created_at.isoformat(),
+            }
+            for i in insights
+        ]
+    }

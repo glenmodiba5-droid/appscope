@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>AppScope SDK Test</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 600px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+
+        h1 {
+            font-size: 20px;
+            margin-bottom: 24px;
+        }
+
+        button {
+            display: block;
+            margin: 10px 0;
+            padding: 10px 20px;
+            background: #4F46E5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #4338CA;
+        }
+
+        .log {
+            margin-top: 30px;
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 16px;
+            font-size: 12px;
+            font-family: monospace;
+            min-height: 100px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>AppScope SDK Test Page</h1>
+
+    <!-- Tracked buttons using data attributes -->
+    <button data-as-track="signup_button" data-as-feature="onboarding">
+        Click me (tracked automatically)
+    </button>
+
+    <button onclick="AppScope.track('purchase_clicked', { feature: 'billing', category: 'conversion' })">
+        Track custom event
+    </button>
+
+    <button onclick="AppScope.feature('dark_mode', 'toggled')">
+        Track feature use
+    </button>
+
+    <button onclick="AppScope.onboardingStep(1, false)">
+        Onboarding Step 1
+    </button>
+
+    <button onclick="AppScope.onboardingStep(2, false)">
+        Onboarding Step 2
+    </button>
+
+    <button onclick="AppScope.onboardingStep(3, true)">
+        Complete Onboarding
+    </button>
+
+    <div class="log" id="log">Waiting for events...</div>
+
+    <script src="./appscope.js"></script>
+    <script>
+        // Replace with your actual API key
+        const MY_API_KEY = 'as_live_833af894de354a9ab9dc123c9a605572';
+
+        AppScope.init({
+            apiKey: MY_API_KEY,
+            baseUrl: 'http://127.0.0.1:8000',
+            debug: true,
+        });
+
+        // Patch fetch to show log
+        const origFetch = window.fetch;
+        window.fetch = function (url, opts) {
+            if (url.includes('/events/track')) {
+                const body = JSON.parse(opts.body);
+                const log = document.getElementById('log');
+                log.textContent += `\n[${new Date().toLocaleTimeString()}] ${body.event_name} → ${body.properties.page}\n`;
+            }
+            return origFetch.apply(this, arguments);
+        };
+    </script>
+
+</body>
+
+</html>
