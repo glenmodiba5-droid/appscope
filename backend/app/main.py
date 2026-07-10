@@ -1,6 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import events, insights, dashboard
+from app.routers import events, insights, dashboard, auth
+
+app.include_router(events.router)
+app.include_router(insights.router)
+app.include_router(dashboard.router)
+app.include_router(auth.router)
 
 app = FastAPI(
     title="AppScope API",
