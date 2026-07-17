@@ -7,6 +7,7 @@
   <title>AppScope — Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet" />
+
   <style>
     *,
     *::before,
@@ -841,6 +842,132 @@
       justify-content: flex-end;
       margin-top: 20px;
     }
+
+    /* ── Mobile Responsive ── */
+
+    /* 1. New Tablet Breakpoint: Stack complex layouts before they get crushed */
+    @media (max-width: 1024px) {
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* 2. Existing Mobile Breakpoint: Converts sidebar to top-nav */
+    @media (max-width: 768px) {
+      body {
+        display: block;
+      }
+
+      .sidebar {
+        width: 100%;
+        min-height: auto;
+        height: 56px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        border-right: none;
+        border-bottom: 1px solid var(--slate-200);
+        padding: 0 16px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+      }
+
+      .sidebar-logo {
+        padding: 0;
+        border-bottom: none;
+      }
+
+      .logo-tag,
+      .sidebar-nav,
+      .sidebar-app,
+      .pulse-label {
+        display: none;
+      }
+
+      .mobile-nav {
+        display: flex;
+        gap: 4px;
+      }
+
+      .mobile-nav-item {
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--slate-500);
+        cursor: pointer;
+        border: none;
+        background: none;
+        font-family: 'Inter', sans-serif;
+      }
+
+      .mobile-nav-item.active {
+        background: var(--indigo-light);
+        color: var(--indigo);
+        font-weight: 600;
+      }
+
+      .main {
+        margin-left: 0;
+        margin-top: 56px;
+      }
+
+      .pulse-bar {
+        padding: 0 16px;
+        gap: 10px;
+      }
+
+      .page-header {
+        padding: 16px 16px 0;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .header-actions {
+        width: 100%;
+      }
+
+      .btn {
+        flex: 1;
+        justify-content: center;
+      }
+
+      .content {
+        padding: 16px 16px 40px;
+      }
+
+      .metrics-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .metric-value {
+        font-size: 24px;
+      }
+
+      .modal {
+        width: 90%;
+        padding: 24px;
+      }
+    }
+
+    /* 3. Small Phone Breakpoint: Stack everything to a single column */
+    @media (max-width: 480px) {
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .mobile-nav {
+      display: none;
+    }
   </style>
 </head>
 
@@ -855,10 +982,7 @@
         <label class="input-label">API Key</label>
         <input class="input" id="apiKeyInput" placeholder="as_live_..." autocomplete="off" />
       </div>
-      <div class="input-wrap">
-        <label class="input-label">API Base URL</label>
-        <input class="input" id="apiUrlInput" value="https://appscope-h6mz.onrender.com/" />
-      </div>
+      <input type="hidden" id="apiUrlInput" value="https://appscope-h6mz.onrender.com/" />
       <div class="modal-actions">
         <button class="btn btn-primary" onclick="connectApp()">Load Dashboard</button>
       </div>
@@ -868,6 +992,12 @@
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-logo">
+      <div class="mobile-nav" id="mobileNav">
+        <button class="mobile-nav-item active" onclick="showPageMobile('overview', this)">Overview</button>
+        <button class="mobile-nav-item" onclick="showPageMobile('retention', this)">Retention</button>
+        <button class="mobile-nav-item" onclick="showPageMobile('users', this)">Users</button>
+        <button class="mobile-nav-item" onclick="showPageMobile('insights', this)">Insights</button>
+      </div>
       <div class="logo-mark">
         <div class="logo-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
@@ -923,9 +1053,16 @@
 
     <div class="sidebar-app">
       <div class="app-dot"></div>
-      <div>
-        <div class="app-name" id="sidebarAppName">—</div>
-        <div class="app-key" id="sidebarApiKey">not connected</div>
+      <div style="flex:1; min-width:0;">
+        <div class="app-name" id="sidebarAppName"
+          style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">—</div>
+        <div class="app-key" id="sidebarApiKey" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          not connected</div>
+      </div>
+      <div onclick="logout()"
+        style="cursor:pointer; font-size:11px; color:var(--slate-400); padding:4px 8px; border-radius:5px; transition: background 0.15s;"
+        onmouseover="this.style.background='var(--slate-100)'" onmouseout="this.style.background='transparent'">
+        Sign out
       </div>
     </div>
   </aside>
@@ -1105,6 +1242,11 @@
       API_KEY = document.getElementById('apiKeyInput').value.trim();
       BASE_URL = document.getElementById('apiUrlInput').value.trim().replace(/\/$/, '');
       if (!API_KEY) return showToast('Please enter an API key');
+
+      // Save to localStorage so it persists across refreshes
+      localStorage.setItem('_as_api_key', API_KEY);
+      localStorage.setItem('_as_base_url', BASE_URL);
+
       document.getElementById('apiModal').style.display = 'none';
       document.getElementById('sidebarApiKey').textContent = API_KEY.slice(0, 18) + '...';
       await loadAllData();
@@ -1327,12 +1469,53 @@
       }
     }
 
+    // ── Logout ──────────────────────────────────────────────────────────────────
+    function logout() {
+      // Clear storage
+      localStorage.removeItem('_as_api_key');
+      localStorage.removeItem('_as_base_url');
+      sessionStorage.removeItem('_as_pending_key');
+
+      // Reset variables
+      API_KEY = '';
+      overviewData = null;
+      insightsData = null;
+      retentionData = null;
+      riskData = null;
+
+      // Clear inputs and show modal
+      document.getElementById('apiKeyInput').value = '';
+      document.getElementById('sidebarAppName').textContent = '—';
+      document.getElementById('sidebarApiKey').textContent = 'not connected';
+      document.getElementById('apiModal').style.display = 'flex';
+    }
+
     // ── Toast ─────────────────────────────────────────────────────────────────────
     function showToast(msg) {
       const t = document.getElementById('toast');
       t.textContent = msg;
       t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // Auto-login from localStorage
+    const savedKey = localStorage.getItem('_as_api_key');
+    const savedUrl = localStorage.getItem('_as_base_url');
+    if (savedKey) {
+      document.getElementById('apiKeyInput').value = savedKey;
+      document.getElementById('apiUrlInput').value = savedUrl || 'https://appscope-h6mz.onrender.com';
+      document.getElementById('apiModal').style.display = 'none';
+      API_KEY = savedKey;
+      BASE_URL = (savedUrl || 'https://appscope-h6mz.onrender.com').replace(/\/$/, '');
+      loadAllData();
+    }
+
+    function showPageMobile(page, el) {
+      ['overview', 'retention', 'users', 'insights'].forEach(p => {
+        document.getElementById(`page-${p}`).style.display = p === page ? 'block' : 'none';
+      });
+      document.querySelectorAll('.mobile-nav-item').forEach(i => i.classList.remove('active'));
+      el.classList.add('active');
     }
 
     // Auto-fill from registration flow
@@ -1342,10 +1525,17 @@
       document.getElementById('apiKeyInput').value = pendingKey;
       sessionStorage.removeItem('_as_pending_key');
     }
-    if (pendingUrl) {
+    if (pendingUrl && pendingUrl.trim() !== '') {
       document.getElementById('apiUrlInput').value = pendingUrl;
       sessionStorage.removeItem('_as_pending_url');
     }
+  </script>
+  <script src="./appscope.js"></script>
+  <script>
+    AppScope.init({
+      apiKey: 'as_live_833af894de354a9ab9dc123c9a605572',
+      debug: false,
+    });
   </script>
 </body>
 

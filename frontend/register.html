@@ -532,7 +532,7 @@
 
         <div class="input-group">
           <label class="input-label">Your name</label>
-          <input class="input" id="nameInput" type="text" placeholder="Glen Modiba" autocomplete="name" />
+          <input class="input" id="nameInput" type="text" placeholder="john doe" autocomplete="name" />
         </div>
 
         <div class="input-group">
@@ -694,6 +694,13 @@
     // ── Pre-fill from sessionStorage if coming back ───────────────────────────────
     window.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') register();
+    });
+  </script>
+  <script src="./appscope.js"></script>
+  <script>
+    AppScope.init({
+      apiKey: 'as_live_833af894de354a9ab9dc123c9a605572',
+      debug: false,
     });
   </script>
 

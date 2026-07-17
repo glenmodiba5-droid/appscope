@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from app.database import get_db
 from app.models.models import App, TrackedUser, Event, Session as SessionModel
 from pydantic import BaseModel, field_validator
@@ -10,8 +11,8 @@ import uuid
 
 router = APIRouter(prefix="/events", tags=["Events"])
 
+# ── Pydantic schemas ────────────────────────────────────────────────────────
 
-# ── Pydantic schemas (strict data contracts) ──────────────────────────────────
 
 class EventProperties(BaseModel):
     page: Optional[str] = None
@@ -28,7 +29,9 @@ class EventContext(BaseModel):
 
 
 class IncomingEvent(BaseModel):
-    user_id: str                    # hashed user ID from client app
+    # NEW: SDK can send its own UUID to prevent duplicates
+    event_id: Optional[str] = None
+    user_id: str
     session_id: str
     event_name: str
     event_category: str
@@ -52,8 +55,8 @@ class IncomingEvent(BaseModel):
             raise ValueError("user_id cannot be empty")
         return v.strip()
 
+# ── Helpers ─────────────────────────────────────────────────────────────────
 
-# ── Helper: resolve or create tracked user ────────────────────────────────────
 
 def get_or_create_user(db: Session, app_id: uuid.UUID, user_id: str, context: EventContext):
     user = db.query(TrackedUser).filter(
@@ -69,12 +72,10 @@ def get_or_create_user(db: Session, app_id: uuid.UUID, user_id: str, context: Ev
             country=context.country,
         )
         db.add(user)
-        db.flush()  # get the ID without committing yet
+        db.flush()
 
     return user
 
-
-# ── Helper: resolve or create session ─────────────────────────────────────────
 
 def get_or_create_session(db: Session, app_id: uuid.UUID, user: TrackedUser, event: IncomingEvent):
     session = db.query(SessionModel).filter(
@@ -94,20 +95,16 @@ def get_or_create_session(db: Session, app_id: uuid.UUID, user: TrackedUser, eve
     return session
 
 
-# ── Helper: update user state after each event ────────────────────────────────
-
 def update_user_state(user: TrackedUser, event: IncomingEvent, now: datetime):
     user.last_seen = now
     user.total_events = (user.total_events or 0) + 1
 
-    # Track features used
     if event.properties and event.properties.feature:
         features = user.key_features_used or []
         if event.properties.feature not in features:
             features.append(event.properties.feature)
             user.key_features_used = features
 
-    # Track onboarding progress
     if event.event_category == "onboarding":
         if event.event_name == "onboarding_completed":
             user.onboarding_completed = True
@@ -117,13 +114,12 @@ def update_user_state(user: TrackedUser, event: IncomingEvent, now: datetime):
                 if step > (user.onboarding_step_reached or 0):
                     user.onboarding_step_reached = step
 
-    # Days since last session
     if user.first_seen:
         delta = now - user.first_seen.replace(tzinfo=timezone.utc)
         user.days_since_last_session = round(delta.total_seconds() / 86400, 2)
 
 
-# ── Main endpoint ─────────────────────────────────────────────────────────────
+# ── Main endpoint ───────────────────────────────────────────────────────────
 
 @router.post("/track", status_code=201)
 def track_event(
@@ -131,7 +127,6 @@ def track_event(
     x_api_key: str = Header(..., description="Client app API key"),
     db: Session = Depends(get_db)
 ):
-    # 1. Validate API key and find the app
     app = db.query(App).filter(
         App.api_key == x_api_key,
         App.is_active == True
@@ -143,26 +138,31 @@ def track_event(
 
     now = datetime.now(timezone.utc)
 
-    # 2. Resolve or create the tracked user
     user = get_or_create_user(db, app.id, payload.user_id, payload.context)
-
-    # 3. Resolve or create the session
     session = get_or_create_session(db, app.id, user, payload)
 
-    # 4. Write the raw event
-    event = Event(
-        app_id=app.id,
-        tracked_user_id=user.id,
-        session_id=payload.session_id,
-        event_name=payload.event_name,
-        event_category=payload.event_category,
-        timestamp=payload.timestamp,
-        properties=payload.properties.model_dump(),
-        context=payload.context.model_dump(),
-    )
+    # Prepare event data, using the client-provided ID if it exists
+    event_kwargs = {
+        "app_id": app.id,
+        "tracked_user_id": user.id,
+        "session_id": payload.session_id,
+        "event_name": payload.event_name,
+        "event_category": payload.event_category,
+        "timestamp": payload.timestamp,
+        "properties": payload.properties.model_dump(),
+        "context": payload.context.model_dump(),
+    }
+
+    # If the SDK sent an ID, use it as the database primary key
+    if payload.event_id:
+        try:
+            event_kwargs["id"] = uuid.UUID(payload.event_id)
+        except ValueError:
+            pass  # If they send a malformed UUID, fallback to letting the DB generate one
+
+    event = Event(**event_kwargs)
     db.add(event)
 
-    # 5. Update session stats
     session.event_count = (session.event_count or 0) + 1
     session.ended_at = now
     if session.started_at:
@@ -176,11 +176,20 @@ def track_event(
             pages.append(payload.properties.page)
             session.pages_visited = pages
 
-    # 6. Update user state
     update_user_state(user, payload, now)
 
-    # 7. Commit everything atomically
-    db.commit()
+    # 7. Commit everything atomically, but catch duplicate retries
+    try:
+        db.commit()
+    except IntegrityError:
+        # A unique constraint failed (meaning this event_id is already in the database)
+        db.rollback()
+        return {
+            "status": "ok",
+            "message": "Duplicate event ignored via idempotency key.",
+            "event_id": payload.event_id,
+            "session_id": session.session_id,
+        }
 
     return {
         "status": "ok",

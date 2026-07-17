@@ -252,32 +252,55 @@ async def analyze(
         if not ai_body:
             continue
 
-        insight = Insight(
-            app_id=app.id,
-            insight_type=pattern_type,
-            severity=severity_map[pattern_type],
-            title=titles[pattern_type],
-            body=ai_body,
-            raw_data=raw_list,
-        )
-        db.add(insight)
+        # --- UPSERT LOGIC STARTS HERE ---
+
+        # 1. Check if this type of insight already exists for this app
+        existing_insight = db.query(Insight).filter(
+            Insight.app_id == app.id,
+            Insight.insight_type == pattern_type
+        ).first()
+
+        if existing_insight:
+            # 2. Update the existing record with fresh data
+            existing_insight.body = ai_body
+            existing_insight.raw_data = raw_list
+            existing_insight.severity = severity_map[pattern_type]
+            existing_insight.is_read = False  # Mark unread so it triggers dashboard alerts
+            existing_insight.created_at = datetime.now(
+                timezone.utc)  # Bump timestamp to now
+        else:
+            # 3. Create a new record if one doesn't exist
+            insight = Insight(
+                app_id=app.id,
+                insight_type=pattern_type,
+                severity=severity_map[pattern_type],
+                title=titles[pattern_type],
+                body=ai_body,
+                raw_data=raw_list,
+            )
+            db.add(insight)
+
+        # --- UPSERT LOGIC ENDS HERE ---
+
         generated.append({
             "type": pattern_type,
             "severity": severity_map[pattern_type],
             "title": titles[pattern_type],
             "body": ai_body,
+            # Optional: lets the frontend know if it was an update
+            "was_updated": bool(existing_insight)
         })
 
     db.commit()
 
     return {
         "status": "ok",
-        "insights_generated": len(generated),
+        "insights_processed": len(generated),
         "insights": generated
     }
 
-
 # ── Fetch stored insights ─────────────────────────────────────────────────────
+
 
 @router.get("/")
 def get_insights(
@@ -305,4 +328,99 @@ def get_insights(
             }
             for i in insights
         ]
+    }
+
+
+@router.post("/cron/analyze-all", tags=["Cron"])
+async def cron_analyze_all(
+    x_cron_secret: str = Header(..., description="Secret key to trigger cron"),
+    db: Session = Depends(get_db)
+):
+    """Master endpoint to run pattern detection for all active apps."""
+    # 1. Verify the secret key
+    expected_secret = os.getenv("CRON_SECRET_KEY")
+    if not expected_secret or x_cron_secret != expected_secret:
+        raise HTTPException(
+            status_code=401, detail="Unauthorized cron trigger")
+
+    # 2. Get all active apps
+    active_apps = db.query(App).filter(App.is_active == True).all()
+
+    total_insights_generated = 0
+    apps_processed = 0
+
+    severity_map = {
+        "churn_risk": "critical",
+        "friction_points": "critical",
+        "onboarding_dropoff": "warning",
+        "dead_features": "info",
+    }
+
+    titles = {
+        "churn_risk": "Churn Risk Detected",
+        "dead_features": "Low Adoption Features",
+        "friction_points": "Friction Points Found",
+        "onboarding_dropoff": "Onboarding Drop-off",
+    }
+
+    # 3. Run the loop for each app
+    for app in active_apps:
+        apps_processed += 1
+        patterns = {
+            "churn_risk": detect_churn_risk(db, app.id),
+            "dead_features": detect_dead_features(db, app.id),
+            "friction_points": detect_friction_points(db, app.id),
+            "onboarding_dropoff": detect_onboarding_dropoff(db, app.id),
+        }
+
+        for pattern_type, raw_data in patterns.items():
+            raw_list = [dict(row) for row in raw_data]
+            if not raw_list:
+                continue
+
+            # Convert non-serializable types
+            from decimal import Decimal
+            for item in raw_list:
+                for k, v in item.items():
+                    if isinstance(v, datetime):
+                        item[k] = v.isoformat()
+                    elif isinstance(v, Decimal):
+                        item[k] = float(v)
+
+            ai_body = await narrate_with_ai(pattern_type, raw_list)
+            if not ai_body:
+                continue
+
+            # UPSERT LOGIC
+            existing_insight = db.query(Insight).filter(
+                Insight.app_id == app.id,
+                Insight.insight_type == pattern_type
+            ).first()
+
+            if existing_insight:
+                existing_insight.body = ai_body
+                existing_insight.raw_data = raw_list
+                existing_insight.severity = severity_map[pattern_type]
+                existing_insight.is_read = False
+                existing_insight.created_at = datetime.now(timezone.utc)
+            else:
+                insight = Insight(
+                    app_id=app.id,
+                    insight_type=pattern_type,
+                    severity=severity_map[pattern_type],
+                    title=titles[pattern_type],
+                    body=ai_body,
+                    raw_data=raw_list,
+                )
+                db.add(insight)
+
+            total_insights_generated += 1
+
+    db.commit()
+
+    return {
+        "status": "ok",
+        "message": "Global analysis complete",
+        "apps_processed": apps_processed,
+        "total_insights_generated": total_insights_generated
     }
