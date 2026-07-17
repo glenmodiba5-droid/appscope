@@ -1,0 +1,17 @@
+name: AppScope Daily Analysis
+
+on:
+  schedule:
+    # Runs at 00:00 UTC every day
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Allows you to manually click a "Run" button in GitHub
+
+jobs:
+  run-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Master Cron Endpoint
+        run: |
+          curl -X POST ${{ secrets.RENDER_BACKEND_URL }}/insights/cron/analyze-all \
+          -H "x-cron-secret: ${{ secrets.CRON_SECRET_KEY }}" \
+          -H "Content-Type: application/json"
