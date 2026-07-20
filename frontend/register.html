@@ -56,7 +56,7 @@
       border: 1px solid var(--slate-200);
       overflow: hidden;
       box-shadow: 0 4px 40px rgba(0, 0, 0, 0.08);
-      min-height: 580px;
+      min-height: 620px;
     }
 
     /* ── Left Panel ── */
@@ -206,11 +206,11 @@
     .form-sub {
       font-size: 13.5px;
       color: var(--slate-500);
-      margin-bottom: 32px;
+      margin-bottom: 24px;
     }
 
     .input-group {
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
 
     .input-label {
@@ -311,7 +311,7 @@
     .divider {
       height: 1px;
       background: var(--slate-100);
-      margin: 24px 0;
+      margin: 20px 0;
     }
 
     .login-link {
@@ -363,7 +363,7 @@
     .success-sub {
       font-size: 13.5px;
       color: var(--slate-500);
-      margin-bottom: 28px;
+      margin-bottom: 24px;
       line-height: 1.6;
     }
 
@@ -372,7 +372,7 @@
       border: 1px solid var(--slate-200);
       border-radius: 8px;
       padding: 16px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       text-align: left;
     }
 
@@ -528,16 +528,22 @@
       <!-- Registration Form -->
       <div id="formPanel">
         <div class="form-title">Create your account</div>
-        <div class="form-sub">Get your API key and start tracking in minutes.</div>
+        <div class="form-sub">Sign up to access your analytics dashboard.</div>
 
         <div class="input-group">
           <label class="input-label">Your name</label>
-          <input class="input" id="nameInput" type="text" placeholder="john doe" autocomplete="name" />
+          <input class="input" id="nameInput" type="text" placeholder="John Doe" autocomplete="name" />
         </div>
 
         <div class="input-group">
           <label class="input-label">Email address</label>
           <input class="input" id="emailInput" type="email" placeholder="you@yourapp.com" autocomplete="email" />
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Password</label>
+          <input class="input" id="passwordInput" type="password" placeholder="••••••••" autocomplete="new-password" />
+          <div class="input-hint">Must be at least 8 characters.</div>
         </div>
 
         <div class="input-group">
@@ -548,7 +554,7 @@
 
         <button class="btn-submit" id="submitBtn" onclick="register()">
           <div class="spinner" id="spinner"></div>
-          <span id="btnText">Create account & get API key</span>
+          <span id="btnText">Create Account</span>
         </button>
 
         <div class="error-msg" id="errorMsg"></div>
@@ -567,11 +573,11 @@
             <polyline points="20 6 9 17 4 12" />
           </svg>
         </div>
-        <div class="success-title">You're in. 🎉</div>
-        <div class="success-sub">Your account is ready. Copy your API key below and drop it into your app.</div>
+        <div class="success-title">You're in! 🎉</div>
+        <div class="success-sub">Your account is ready. Copy your tracking API key below to embed in your app.</div>
 
         <div class="api-key-box">
-          <div class="api-key-label">Your API Key</div>
+          <div class="api-key-label">Your Tracking API Key</div>
           <div class="api-key-value" id="apiKeyDisplay">—</div>
         </div>
 
@@ -594,8 +600,8 @@
         </button>
 
         <div class="warning-note">
-          <strong>Save your API key.</strong> You'll need it to connect your app and access your dashboard. Treat it
-          like a password.
+          <strong>Note:</strong> You can sign in anytime using your <strong>email and password</strong>. You can also
+          view or regenerate this key in your dashboard settings.
         </div>
       </div>
 
@@ -603,14 +609,22 @@
   </div>
 
   <script>
+    // ✅ REVERSE BOUNCER: If they already have a token, skip registration and go straight to the dashboard!
+    const sessionToken = localStorage.getItem('appscope_token');
+
+    if (sessionToken) {
+      window.location.href = 'dashboard.html';
+    }
+
     // ── Config ────────────────────────────────────────────────────────────────────
-    const BASE_URL = 'https://appscope-h6mz.onrender.com'; // your Render URL
+    const BASE_URL = 'https://appscope-h6mz.onrender.com';
     let generatedApiKey = '';
 
     // ── Register ──────────────────────────────────────────────────────────────────
     async function register() {
       const name = document.getElementById('nameInput').value.trim();
       const email = document.getElementById('emailInput').value.trim();
+      const password = document.getElementById('passwordInput').value.trim();
       const appName = document.getElementById('appNameInput').value.trim();
 
       // Basic validation
@@ -619,6 +633,7 @@
 
       if (!name) { markError('nameInput', 'Please enter your name.'); valid = false; }
       if (!email || !email.includes('@')) { markError('emailInput', 'Please enter a valid email.'); valid = false; }
+      if (!password || password.length < 8) { markError('passwordInput', 'Password must be at least 8 characters.'); valid = false; }
       if (!appName) { markError('appNameInput', 'Please enter your app name.'); valid = false; }
       if (!valid) return;
 
@@ -628,7 +643,7 @@
         const res = await fetch(`${BASE_URL}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, app_name: appName }),
+          body: JSON.stringify({ name, email, password, app_name: appName }),
         });
 
         const data = await res.json();
@@ -637,6 +652,11 @@
           showError(data.detail || 'Something went wrong. Please try again.');
           setLoading(false);
           return;
+        }
+
+        // Store session token in localStorage
+        if (data.access_token) {
+          localStorage.setItem('appscope_token', data.access_token);
         }
 
         // Success
@@ -662,16 +682,13 @@
 
     // ── Go to dashboard ───────────────────────────────────────────────────────────
     function goToDashboard() {
-      // Store key temporarily so dashboard can pre-fill it
-      sessionStorage.setItem('_as_pending_key', generatedApiKey);
-      sessionStorage.setItem('_as_pending_url', BASE_URL);
       window.location.href = 'dashboard.html';
     }
 
     // ── UI helpers ────────────────────────────────────────────────────────────────
     function setLoading(loading) {
       document.getElementById('spinner').style.display = loading ? 'block' : 'none';
-      document.getElementById('btnText').textContent = loading ? 'Creating account...' : 'Create account & get API key';
+      document.getElementById('btnText').textContent = loading ? 'Creating account...' : 'Create Account';
       document.getElementById('submitBtn').disabled = loading;
     }
 
@@ -691,7 +708,7 @@
       document.querySelectorAll('.input').forEach(i => i.classList.remove('error'));
     }
 
-    // ── Pre-fill from sessionStorage if coming back ───────────────────────────────
+    // ── Keyboard shortcut ────────────────────────────────────────────────────────
     window.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') register();
     });

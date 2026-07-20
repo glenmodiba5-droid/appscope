@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AppScope — Log In</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <style>
+        /* Using the exact same styling variables and layout from your register page */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --white: #FFFFFF;
+            --slate-50: #F8FAFC;
+            --slate-100: #F1F5F9;
+            --slate-200: #E2E8F0;
+            --slate-400: #94A3B8;
+            --slate-500: #64748B;
+            --slate-700: #334155;
+            --navy: #0F172A;
+            --indigo: #4F46E5;
+            --indigo-light: #EEF2FF;
+            --indigo-mid: #C7D2FE;
+            --green: #10B981;
+            --rose: #EF4444;
+            --rose-light: #FEF2F2;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--slate-50);
+            color: var(--navy);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 960px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            background: var(--white);
+            border-radius: 16px;
+            border: 1px solid var(--slate-200);
+            overflow: hidden;
+            box-shadow: 0 4px 40px rgba(0, 0, 0, 0.08);
+            min-height: 580px;
+        }
+
+        /* ── Left Panel ── */
+        .left {
+            background: var(--navy);
+            padding: 48px 44px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .left::before,
+        .left::after {
+            content: '';
+            position: absolute;
+            background: var(--indigo);
+            border-radius: 50%;
+        }
+
+        .left::before {
+            top: -80px;
+            right: -80px;
+            width: 300px;
+            height: 300px;
+            opacity: 0.15;
+        }
+
+        .left::after {
+            bottom: -60px;
+            left: -60px;
+            width: 200px;
+            height: 200px;
+            opacity: 0.1;
+        }
+
+        .left-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--indigo);
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .logo-name {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--white);
+            letter-spacing: -0.3px;
+        }
+
+        .left-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .left-headline {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--white);
+            letter-spacing: -0.5px;
+            line-height: 1.25;
+            margin-bottom: 14px;
+        }
+
+        .left-sub {
+            font-size: 14px;
+            color: var(--slate-400);
+            line-height: 1.65;
+        }
+
+        /* ── Right Panel ── */
+        .right {
+            padding: 48px 44px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .form-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--navy);
+            letter-spacing: -0.4px;
+            margin-bottom: 6px;
+        }
+
+        .form-sub {
+            font-size: 13.5px;
+            color: var(--slate-500);
+            margin-bottom: 32px;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--slate-700);
+            margin-bottom: 6px;
+        }
+
+        .input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            color: var(--navy);
+            background: var(--white);
+            outline: none;
+            transition: all 0.15s;
+        }
+
+        .input:focus {
+            border-color: var(--indigo);
+            box-shadow: 0 0 0 3px var(--indigo-light);
+        }
+
+        .input.error {
+            border-color: var(--rose);
+            box-shadow: 0 0 0 3px var(--rose-light);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 13px;
+            background: var(--indigo);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-submit:hover {
+            background: #4338CA;
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            width: 15px;
+            height: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error-msg {
+            background: var(--rose-light);
+            color: var(--rose);
+            font-size: 13px;
+            padding: 10px 14px;
+            border-radius: 7px;
+            margin-top: 14px;
+            display: none;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--slate-100);
+            margin: 24px 0;
+        }
+
+        .login-link {
+            text-align: center;
+            font-size: 13px;
+            color: var(--slate-500);
+        }
+
+        .login-link a {
+            color: var(--indigo);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <!-- Left Panel -->
+        <div class="left">
+            <div class="left-logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+                        <path d="M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
+                    </svg>
+                </div>
+                <span class="logo-name">AppScope</span>
+            </div>
+
+            <div class="left-content">
+                <div class="left-headline">Welcome back.</div>
+                <div class="left-sub">Sign in to check your latest user behavior, churn alerts, and platform health.
+                </div>
+            </div>
+            <div></div> <!-- Empty div to keep flex layout balanced -->
+        </div>
+
+        <!-- Right Panel -->
+        <div class="right">
+            <div class="form-title">Log in to AppScope</div>
+            <div class="form-sub">Enter your email and password below.</div>
+
+            <div class="input-group">
+                <label class="input-label">Email address</label>
+                <input class="input" id="emailInput" type="email" placeholder="you@yourapp.com" autocomplete="email" />
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Password</label>
+                <input class="input" id="passwordInput" type="password" placeholder="••••••••"
+                    autocomplete="current-password" />
+            </div>
+
+            <button class="btn-submit" id="submitBtn" onclick="login()">
+                <div class="spinner" id="spinner"></div>
+                <span id="btnText">Log In</span>
+            </button>
+
+            <div class="error-msg" id="errorMsg"></div>
+
+            <div class="divider"></div>
+
+            <div class="login-link">
+                Don't have an account? <a href="register.html">Sign up for beta →</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'https://appscope-h6mz.onrender.com';
+
+        async function login() {
+            const email = document.getElementById('emailInput').value.trim();
+            const password = document.getElementById('passwordInput').value.trim();
+
+            clearErrors();
+            let valid = true;
+
+            if (!email || !email.includes('@')) { markError('emailInput', 'Please enter a valid email.'); valid = false; }
+            if (!password) { markError('passwordInput', 'Please enter your password.'); valid = false; }
+            if (!valid) return;
+
+            setLoading(true);
+
+            try {
+                const res = await fetch(`${BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showError(data.detail || 'Invalid email or password.');
+                    setLoading(false);
+                    return;
+                }
+
+                // Store session token in localStorage!
+                if (data.access_token) {
+                    localStorage.setItem('appscope_token', data.access_token);
+                    // Redirect to the dashboard
+                    window.location.href = 'dashboard.html';
+                }
+
+            } catch (e) {
+                showError('Could not connect to the server. Please try again.');
+                setLoading(false);
+            }
+        }
+
+        function setLoading(loading) {
+            document.getElementById('spinner').style.display = loading ? 'block' : 'none';
+            document.getElementById('btnText').textContent = loading ? 'Logging in...' : 'Log In';
+            document.getElementById('submitBtn').disabled = loading;
+        }
+
+        function markError(inputId, message) {
+            document.getElementById(inputId).classList.add('error');
+            showError(message);
+        }
+
+        function showError(message) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = message;
+            el.style.display = 'block';
+        }
+
+        function clearErrors() {
+            document.getElementById('errorMsg').style.display = 'none';
+            document.querySelectorAll('.input').forEach(i => i.classList.remove('error'));
+        }
+
+        window.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') login();
+        });
+    </script>
+</body>
+
+</html>

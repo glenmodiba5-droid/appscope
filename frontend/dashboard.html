@@ -1530,6 +1530,13 @@
       sessionStorage.removeItem('_as_pending_url');
     }
   </script>
+  // 1. Check for the session token immediately
+  const sessionToken = localStorage.getItem('appscope_token');
+
+  if (!sessionToken) {
+  // No token? They aren't logged in. Boot them to the login page.
+  window.location.href = 'login.html';
+  }
   <script src="./appscope.js"></script>
   <script>
     AppScope.init({
