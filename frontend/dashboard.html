@@ -8,6 +8,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet" />
 
+  <!-- THE BOUNCER: Runs instantly before the page renders -->
+  <script>
+    const sessionToken = localStorage.getItem('appscope_token');
+    if (!sessionToken) {
+      window.location.href = 'login.html';
+    }
+  </script>
+
   <style>
     *,
     *::before,
@@ -197,7 +205,7 @@
       min-height: 100vh;
     }
 
-    /* ── Health Pulse Bar (signature element) ── */
+    /* ── Health Pulse Bar ── */
     .pulse-bar {
       background: var(--white);
       border-bottom: 1px solid var(--slate-200);
@@ -767,6 +775,7 @@
       transition: all 0.25s;
       z-index: 999;
       max-width: 320px;
+      pointer-events: none;
     }
 
     .toast.show {
@@ -774,78 +783,7 @@
       transform: translateY(0);
     }
 
-    /* ── API Key Modal ── */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.5);
-      backdrop-filter: blur(2px);
-      z-index: 200;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal {
-      background: var(--white);
-      border-radius: 12px;
-      padding: 32px;
-      width: 420px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-    }
-
-    .modal-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--navy);
-      margin-bottom: 6px;
-    }
-
-    .modal-sub {
-      font-size: 13px;
-      color: var(--slate-500);
-      margin-bottom: 20px;
-    }
-
-    .input-wrap {
-      margin-bottom: 16px;
-    }
-
-    .input-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--slate-700);
-      margin-bottom: 6px;
-      display: block;
-    }
-
-    .input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--slate-200);
-      border-radius: 7px;
-      font-size: 13px;
-      font-family: monospace;
-      color: var(--navy);
-      outline: none;
-      transition: border-color 0.15s;
-    }
-
-    .input:focus {
-      border-color: var(--indigo);
-      box-shadow: 0 0 0 3px var(--indigo-light);
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      margin-top: 20px;
-    }
-
     /* ── Mobile Responsive ── */
-
-    /* 1. New Tablet Breakpoint: Stack complex layouts before they get crushed */
     @media (max-width: 1024px) {
       .two-col {
         grid-template-columns: 1fr;
@@ -856,7 +794,6 @@
       }
     }
 
-    /* 2. Existing Mobile Breakpoint: Converts sidebar to top-nav */
     @media (max-width: 768px) {
       body {
         display: block;
@@ -872,11 +809,6 @@
         border-right: none;
         border-bottom: 1px solid var(--slate-200);
         padding: 0 16px;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 100;
       }
 
       .sidebar-logo {
@@ -951,14 +883,8 @@
       .metric-value {
         font-size: 24px;
       }
-
-      .modal {
-        width: 90%;
-        padding: 24px;
-      }
     }
 
-    /* 3. Small Phone Breakpoint: Stack everything to a single column */
     @media (max-width: 480px) {
       .metrics-grid {
         grid-template-columns: 1fr;
@@ -968,26 +894,16 @@
     .mobile-nav {
       display: none;
     }
+
+    @media (max-width: 768px) {
+      .mobile-nav {
+        display: flex;
+      }
+    }
   </style>
 </head>
 
 <body>
-
-  <!-- API Key Modal -->
-  <div class="modal-overlay" id="apiModal">
-    <div class="modal">
-      <div class="modal-title">Connect your app</div>
-      <div class="modal-sub">Enter your AppScope API key to load your dashboard data.</div>
-      <div class="input-wrap">
-        <label class="input-label">API Key</label>
-        <input class="input" id="apiKeyInput" placeholder="as_live_..." autocomplete="off" />
-      </div>
-      <input type="hidden" id="apiUrlInput" value="https://appscope-h6mz.onrender.com/" />
-      <div class="modal-actions">
-        <button class="btn btn-primary" onclick="connectApp()">Load Dashboard</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Sidebar -->
   <aside class="sidebar">
@@ -1056,8 +972,8 @@
       <div style="flex:1; min-width:0;">
         <div class="app-name" id="sidebarAppName"
           style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">—</div>
-        <div class="app-key" id="sidebarApiKey" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-          not connected</div>
+        <div class="app-key" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Dashboard Active
+        </div>
       </div>
       <div onclick="logout()"
         style="cursor:pointer; font-size:11px; color:var(--slate-400); padding:4px 8px; border-radius:5px; transition: background 0.15s;"
@@ -1230,33 +1146,20 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    let API_KEY = '';
-    let BASE_URL = '';
+    const BASE_URL = 'https://appscope-h6mz.onrender.com';
+    const currentToken = localStorage.getItem('appscope_token');
+
     let overviewData = null;
     let insightsData = null;
     let retentionData = null;
     let riskData = null;
 
-    // ── Connect ──────────────────────────────────────────────────────────────────
-    async function connectApp() {
-      API_KEY = document.getElementById('apiKeyInput').value.trim();
-      BASE_URL = document.getElementById('apiUrlInput').value.trim().replace(/\/$/, '');
-      if (!API_KEY) return showToast('Please enter an API key');
-
-      // Save to localStorage so it persists across refreshes
-      localStorage.setItem('_as_api_key', API_KEY);
-      localStorage.setItem('_as_base_url', BASE_URL);
-
-      document.getElementById('apiModal').style.display = 'none';
-      document.getElementById('sidebarApiKey').textContent = API_KEY.slice(0, 18) + '...';
-      await loadAllData();
-    }
-
     // ── Fetch helpers ─────────────────────────────────────────────────────────────
     async function apiFetch(path) {
       const res = await fetch(`${BASE_URL}${path}`, {
-        headers: { 'x-api-key': API_KEY }
+        headers: { 'Authorization': `Bearer ${currentToken}` }
       });
+      if (res.status === 401) { logout(); return; }
       if (!res.ok) throw new Error(`API error ${res.status}`);
       return res.json();
     }
@@ -1271,7 +1174,7 @@
         ]);
         renderAll();
       } catch (e) {
-        showToast('Failed to load data. Check your API key and server.');
+        showToast('Failed to load data. Check your connection.');
       }
     }
 
@@ -1287,41 +1190,45 @@
       if (!overviewData) return;
       const m = overviewData.metrics;
 
-      document.getElementById('sidebarAppName').textContent = overviewData.app_name;
+      document.getElementById('sidebarAppName').textContent = overviewData.app_name || "AppScope";
       document.getElementById('overviewSub').textContent =
-        `${m.total_users} total users tracked · last refreshed just now`;
+        `${m.total_users || 0} total users tracked · last refreshed just now`;
 
       // Health score
-      const churnPct = m.total_users > 0 ? (m.churn_risk_count / m.total_users) * 100 : 0;
-      const healthScore = Math.max(0, Math.round(100 - churnPct - (100 - m.onboarding_completion_rate) * 0.3));
+      const total = m.total_users || 0;
+      const churnPct = total > 0 ? ((m.churn_risk_count || 0) / total) * 100 : 0;
+      const onboardingRate = m.onboarding_completion_rate || 0;
+      const healthScore = Math.max(0, Math.round(100 - churnPct - (100 - onboardingRate) * 0.3));
+
       const pulseWidth = 100 - healthScore;
       document.getElementById('pulseBar').style.width = pulseWidth + '%';
       const ps = document.getElementById('pulseScore');
       ps.textContent = healthScore + '/100';
+
       if (healthScore >= 70) { ps.className = 'pulse-score good'; document.getElementById('pulseStatus').textContent = 'Healthy'; }
       else if (healthScore >= 45) { ps.className = 'pulse-score warn'; document.getElementById('pulseStatus').textContent = 'Needs attention'; }
       else { ps.className = 'pulse-score crit'; document.getElementById('pulseStatus').textContent = 'At risk'; }
 
-      document.getElementById('riskBadge').textContent = m.churn_risk_count;
-      document.getElementById('insightBadge').textContent = m.unread_critical_insights;
+      document.getElementById('riskBadge').textContent = m.churn_risk_count || 0;
+      document.getElementById('insightBadge').textContent = m.unread_critical_insights || 0;
 
       // Metrics grid
       document.getElementById('metricsGrid').innerHTML = `
-      ${metricCard('Total Users', m.total_users, 'All tracked users', 'indigo',
+      ${metricCard('Total Users', m.total_users || 0, 'All tracked users', 'indigo',
         `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>`)}
-      ${metricCard('Active (7d)', m.active_7d, `${m.active_30d} active in 30 days`, 'green',
+      ${metricCard('Active (7d)', m.active_7d || 0, `${m.active_30d || 0} active in 30 days`, 'green',
           `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
           m.active_7d > 0 ? `<span class="metric-chip chip-green">↑ Active</span>` : '')}
-      ${metricCard('Churn Risk', m.churn_risk_count, 'Inactive 7+ days, no onboarding', 'rose',
+      ${metricCard('Churn Risk', m.churn_risk_count || 0, 'Inactive 7+ days, no onboarding', 'rose',
             `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
             m.churn_risk_count > 0 ? `<span class="metric-chip chip-rose">Needs action</span>` : `<span class="metric-chip chip-green">All clear</span>`)}
-      ${metricCard('Onboarding', m.onboarding_completion_rate + '%', 'Completion rate', 'amber',
+      ${metricCard('Onboarding', (m.onboarding_completion_rate || 0) + '%', 'Completion rate', 'amber',
               `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`,
               m.onboarding_completion_rate < 50 ? `<span class="metric-chip chip-rose">Low — review funnel</span>` : `<span class="metric-chip chip-green">On track</span>`)}
-      ${metricCard('Critical Alerts', m.unread_critical_insights, 'Unread AI insights', 'rose',
+      ${metricCard('Critical Alerts', m.unread_critical_insights || 0, 'Unread AI insights', 'rose',
                 `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
                 m.unread_critical_insights > 0 ? `<span class="metric-chip chip-rose">Action required</span>` : `<span class="metric-chip chip-green">All reviewed</span>`)}
-      ${metricCard('Active (30d)', m.active_30d, 'Monthly active users', 'slate',
+      ${metricCard('Active (30d)', m.active_30d || 0, 'Monthly active users', 'slate',
                   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`)}
     `;
 
@@ -1447,6 +1354,14 @@
       event.currentTarget.classList.add('active');
     }
 
+    function showPageMobile(page, el) {
+      ['overview', 'retention', 'users', 'insights'].forEach(p => {
+        document.getElementById(`page-${p}`).style.display = p === page ? 'block' : 'none';
+      });
+      document.querySelectorAll('.mobile-nav-item').forEach(i => i.classList.remove('active'));
+      el.classList.add('active');
+    }
+
     // ── Actions ───────────────────────────────────────────────────────────────────
     async function refreshData() {
       showToast('Refreshing data...');
@@ -1459,10 +1374,11 @@
       try {
         const res = await fetch(`${BASE_URL}/insights/analyze`, {
           method: 'POST',
-          headers: { 'x-api-key': API_KEY }
+          headers: { 'Authorization': `Bearer ${currentToken}` }
         });
+        if (res.status === 401) { logout(); return; }
         const data = await res.json();
-        showToast(`Analysis complete — ${data.insights_generated} insights generated.`);
+        showToast(`Analysis complete — ${data.insights_generated || 0} insights generated.`);
         await loadAllData();
       } catch (e) {
         showToast('Analysis failed. Check your server.');
@@ -1471,23 +1387,8 @@
 
     // ── Logout ──────────────────────────────────────────────────────────────────
     function logout() {
-      // Clear storage
-      localStorage.removeItem('_as_api_key');
-      localStorage.removeItem('_as_base_url');
-      sessionStorage.removeItem('_as_pending_key');
-
-      // Reset variables
-      API_KEY = '';
-      overviewData = null;
-      insightsData = null;
-      retentionData = null;
-      riskData = null;
-
-      // Clear inputs and show modal
-      document.getElementById('apiKeyInput').value = '';
-      document.getElementById('sidebarAppName').textContent = '—';
-      document.getElementById('sidebarApiKey').textContent = 'not connected';
-      document.getElementById('apiModal').style.display = 'flex';
+      localStorage.removeItem('appscope_token');
+      window.location.href = 'login.html';
     }
 
     // ── Toast ─────────────────────────────────────────────────────────────────────
@@ -1498,45 +1399,12 @@
       setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-    // Auto-login from localStorage
-    const savedKey = localStorage.getItem('_as_api_key');
-    const savedUrl = localStorage.getItem('_as_base_url');
-    if (savedKey) {
-      document.getElementById('apiKeyInput').value = savedKey;
-      document.getElementById('apiUrlInput').value = savedUrl || 'https://appscope-h6mz.onrender.com';
-      document.getElementById('apiModal').style.display = 'none';
-      API_KEY = savedKey;
-      BASE_URL = (savedUrl || 'https://appscope-h6mz.onrender.com').replace(/\/$/, '');
-      loadAllData();
-    }
+    // Initialize Dashboard
+    loadAllData();
 
-    function showPageMobile(page, el) {
-      ['overview', 'retention', 'users', 'insights'].forEach(p => {
-        document.getElementById(`page-${p}`).style.display = p === page ? 'block' : 'none';
-      });
-      document.querySelectorAll('.mobile-nav-item').forEach(i => i.classList.remove('active'));
-      el.classList.add('active');
-    }
-
-    // Auto-fill from registration flow
-    const pendingKey = sessionStorage.getItem('_as_pending_key');
-    const pendingUrl = sessionStorage.getItem('_as_pending_url');
-    if (pendingKey) {
-      document.getElementById('apiKeyInput').value = pendingKey;
-      sessionStorage.removeItem('_as_pending_key');
-    }
-    if (pendingUrl && pendingUrl.trim() !== '') {
-      document.getElementById('apiUrlInput').value = pendingUrl;
-      sessionStorage.removeItem('_as_pending_url');
-    }
   </script>
-  // 1. Check for the session token immediately
-  const sessionToken = localStorage.getItem('appscope_token');
 
-  if (!sessionToken) {
-  // No token? They aren't logged in. Boot them to the login page.
-  window.location.href = 'login.html';
-  }
+  <!-- Dogfooding AppScope on Itself -->
   <script src="./appscope.js"></script>
   <script>
     AppScope.init({

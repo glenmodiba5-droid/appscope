@@ -1,9 +1,34 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import events, insights, dashboard, auth
-from fastapi import Header, HTTPException, Depends
+from sqlalchemy.orm import Session
 import secrets
 import jwt
+
+# Import your database and routers
+from app.database import get_db
+from app.models import App
+from app.routers import events, insights, dashboard, auth
+
+# 1. CREATE THE APP FIRST
+app = FastAPI(
+    title="AppScope API",
+    description="Behind the scenes brain for app builders",
+    version="0.1.0"
+)
+
+# 2. ADD MIDDLEWARE
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 3. SETTINGS & AUTH SETUP
+# Make sure this matches your auth.py secret!
+SECRET_KEY = "your-super-secret-jwt-key"
+ALGORITHM = "HS256"
 
 # Helper to get the current user from the token
 
@@ -54,31 +79,7 @@ def regenerate_api_key(email: str = Depends(get_current_user_email), db: Session
 
     return {"message": "API key regenerated", "api_key": new_api_key}
 
-
-app = FastAPI(
-    title="AppScope API",
-    description="Behind the scenes brain for app builders",
-    version="0.1.0"
-)
-
-
-@app.get("/health")
-def health_check():
-    return {"status": "awake and tracking!"}
-
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app.include_router(events.router)
-app.include_router(insights.router)
-app.include_router(dashboard.router)
-app.include_router(auth.router)
+# 4. BASE ROUTES
 
 
 @app.get("/")
@@ -87,5 +88,12 @@ def root():
 
 
 @app.get("/health")
-def health():
-    return {"status": "healthy"}
+def health_check():
+    return {"status": "awake and tracking!"}
+
+
+# 5. INCLUDE EXTERNAL ROUTERS
+app.include_router(events.router)
+app.include_router(insights.router)
+app.include_router(dashboard.router)
+app.include_router(auth.router)
