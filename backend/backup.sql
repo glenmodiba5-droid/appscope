@@ -1,0 +1,3 @@
+INSERT INTO apps VALUES (UUID('5b5ced60-957e-4cb9-85bf-846d880903e3'), 'Test App', 'test@appscope.com', 'as_live_833af894de354a9ab9dc123c9a605572', datetime.datetime(2026, 7, 9, 11, 49, 26, 61726, tzinfo=datetime.timezone.utc), True);
+INSERT INTO apps VALUES (UUID('22e6600d-9a67-4f8e-97db-a7dad04e616c'), 'appscore', 'glenmodiba5@gmail.com', 'as_live_dcd167a9c4f74921b734de53b1a83e1b', datetime.datetime(2026, 7, 10, 14, 50, 4, 542628, tzinfo=datetime.timezone.utc), True);
+INSERT INTO apps VALUES (UUID('84ff71d9-206d-4226-991b-c89cabb097f5'), 'Creatyyy', 'adrafope@gmail.com', 'as_live_1fc1193f29cb45828f4868646577d54d', datetime.datetime(2026, 7, 19, 11, 7, 41, 236535, tzinfo=datetime.timezone.utc), True);
