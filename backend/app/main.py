@@ -1,3 +1,4 @@
+from fastapi.responses import Response
 from fastapi import FastAPI, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -79,6 +80,45 @@ def regenerate_api_key(email: str = Depends(get_current_user_email), db: Session
 
     return {"message": "API key regenerated", "api_key": new_api_key}
 
+
+# ==========================================
+# PUBLIC TRACKING SCRIPT
+# ==========================================
+
+
+@app.get("/track.js")
+def serve_tracker():
+    js_code = """
+(function() {
+    window.AppScope = window.AppScope || function() {
+        (window.AppScope.q = window.AppScope.q || []).push(arguments);
+    };
+
+    window.AppScope.init = function(config) {
+        window.AppScope.apiKey = config.apiKey;
+        
+        // Automatically fire an initial pageview event on load
+        fetch("https://appscope-h6mz.onrender.com/events/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                api_key: window.AppScope.apiKey,
+                event_type: "pageview",
+                path: window.location.pathname,
+                timestamp: new Date().toISOString()
+            })
+        }).catch(err => console.error("AppScope dispatch error:", err));
+    };
+
+    // Process any early queued commands
+    if (window.AppScope.q) {
+        const queue = window.AppScope.q;
+        window.AppScope.q = [];
+        queue.forEach(args => window.AppScope[args[0]] && window.AppScope[args[0]](args[1]));
+    }
+})();
+    """
+    return Response(content=js_code, media_type="application/javascript")
 # 4. BASE ROUTES
 
 
