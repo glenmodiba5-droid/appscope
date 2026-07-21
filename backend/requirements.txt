@@ -8,3 +8,4 @@ httpx
 alembic
 passlib
 PyJWT
+bcrypt
