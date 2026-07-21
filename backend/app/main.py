@@ -6,7 +6,7 @@ import jwt
 
 # Import your database and routers
 from app.database import get_db
-from app.models.models import App
+from app.models.db_models import App
 from app.routers import events, insights, dashboard, auth
 
 # 1. CREATE THE APP FIRST

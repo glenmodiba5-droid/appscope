@@ -1,5 +1,5 @@
 from app.database import SessionLocal
-from app.models.models import App, TrackedUser, Event, Session as SessionModel
+from backend.app.models.db_models import App, TrackedUser, Event, Session as SessionModel
 from datetime import datetime, timezone, timedelta
 import uuid
 

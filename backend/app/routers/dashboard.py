@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.database import get_db
-from app.models.models import App, TrackedUser, Insight
+from backend.app.models.db_models import App, TrackedUser, Insight
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 

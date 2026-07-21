@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.database import get_db
-from app.models.models import App, Insight
+from backend.app.models.db_models import App, Insight
 from datetime import datetime, timezone
 import httpx
 import os

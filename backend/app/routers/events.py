@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from app.database import get_db
-from app.models.models import App, TrackedUser, Event, Session as SessionModel
+from backend.app.models.db_models import App, TrackedUser, Event, Session as SessionModel
 from pydantic import BaseModel, field_validator
 from typing import Optional
 from datetime import datetime, timezone

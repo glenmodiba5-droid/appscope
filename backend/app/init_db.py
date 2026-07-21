@@ -1,5 +1,5 @@
 from app.database import engine, Base
-from app.models.models import App, TrackedUser, Event, Insight, Session
+from backend.app.models.db_models import App, TrackedUser, Event, Insight, Session
 
 
 def init():

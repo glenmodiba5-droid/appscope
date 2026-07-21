@@ -1,10 +1,11 @@
 from app.database import SessionLocal
-from app.models.models import App, TrackedUser, Event, Session as SessionModel, Insight
+from backend.app.models.db_models import App, TrackedUser, Event, Session as SessionModel, Insight
 from sqlalchemy import delete
+
 
 def clean():
     db = SessionLocal()
-    
+
     # Get your test app
     app = db.query(App).filter(App.owner_email == "test@appscope.com").first()
     if not app:
@@ -19,10 +20,11 @@ def clean():
     db.execute(delete(Event).where(Event.app_id == app.id))
     db.execute(delete(SessionModel).where(SessionModel.app_id == app.id))
     db.execute(delete(TrackedUser).where(TrackedUser.app_id == app.id))
-    
+
     db.commit()
     print("Done. All seed data removed. Fresh start.")
     db.close()
+
 
 if __name__ == "__main__":
     clean()
