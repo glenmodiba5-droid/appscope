@@ -10,19 +10,13 @@ from app.database import Base
 
 
 class App(Base):
-    """
-    Represents a client's application registered on the platform.
-    Every client who installs your SDK gets one of these.
-    """
     __tablename__ = "apps"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String(255), nullable=False)
-    owner_email = Column(String(255), nullable=False)
-    api_key = Column(String(255), unique=True,
-                     nullable=False)  # SDK auth token
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    owner_email = Column(String, unique=True, index=True)
+    api_key = Column(String, unique=True, index=True)
+    hashed_password = Column(String)  # <--- ADD THIS LINE!
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    is_active = Column(Boolean, default=True)
 
     # Relationships
     events = relationship("Event", back_populates="app")
