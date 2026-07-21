@@ -9,7 +9,7 @@ import secrets
 
 # Import your database dependency and models
 from app.database import get_db
-from app.models import App
+from app.models.db_models import App
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
