@@ -1,5 +1,4 @@
 from urllib import response
-
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -8,26 +7,41 @@ from app.models.db_models import App, Insight
 from datetime import datetime, timezone
 import httpx
 import os
+import jwt
 
 router = APIRouter(prefix="/insights", tags=["Insights"])
 
+# JWT Configuration (Must match auth.py)
+SECRET_KEY = "your-super-secret-jwt-key"
+ALGORITHM = "HS256"
 
 # ── Auth helper ───────────────────────────────────────────────────────────────
 
-def get_app(api_key: str, db: Session):
-    app = db.query(App).filter(
-        App.api_key == api_key,
-        App.is_active == True
-    ).first()
+
+def get_app_from_token(authorization: str = Header(...), db: Session = Depends(get_db)):
+    """Decodes the human's JWT token and returns their associated App"""
+    try:
+        # Extract token from "Bearer <token>"
+        token = authorization.split(" ")[1]
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("sub")
+        if not email:
+            raise HTTPException(
+                status_code=401, detail="Invalid token payload")
+    except Exception:
+        raise HTTPException(
+            status_code=401, detail="Invalid or expired session token")
+
+    app = db.query(App).filter(App.owner_email ==
+                               email, App.is_active == True).first()
     if not app:
         raise HTTPException(
-            status_code=401, detail="Invalid or inactive API key")
+            status_code=404, detail="App not found for this user")
+
     return app
 
 
 # ── Pattern 1: Churn Risk ─────────────────────────────────────────────────────
-# Users who have not returned in 7+ days and never completed onboarding
-
 def detect_churn_risk(db: Session, app_id):
     result = db.execute(text("""
         SELECT
@@ -49,8 +63,6 @@ def detect_churn_risk(db: Session, app_id):
 
 
 # ── Pattern 2: Dead Features ──────────────────────────────────────────────────
-# Features that appear in events but are used by less than 5% of users
-
 def detect_dead_features(db: Session, app_id):
     result = db.execute(text("""
         WITH total_users AS (
@@ -81,8 +93,6 @@ def detect_dead_features(db: Session, app_id):
 
 
 # ── Pattern 3: Friction Points ────────────────────────────────────────────────
-# Pages where sessions end within 60 seconds of arriving
-
 def detect_friction_points(db: Session, app_id):
     result = db.execute(text("""
         SELECT
@@ -101,8 +111,6 @@ def detect_friction_points(db: Session, app_id):
 
 
 # ── Pattern 4: Onboarding Drop-off ───────────────────────────────────────────
-# Which onboarding step loses the most users
-
 def detect_onboarding_dropoff(db: Session, app_id):
     result = db.execute(text("""
         SELECT
@@ -119,8 +127,6 @@ def detect_onboarding_dropoff(db: Session, app_id):
 
 
 # ── AI Narration ──────────────────────────────────────────────────────────────
-# Takes raw pattern data, returns plain English insight via Claude API
-
 async def narrate_with_ai(pattern_type: str, raw_data: list) -> str:
     if not raw_data:
         return None
@@ -177,7 +183,7 @@ async def narrate_with_ai(pattern_type: str, raw_data: list) -> str:
                 "anthropic-version": "2023-06-01"
             },
             json={
-                "model": "claude-sonnet-4-6",
+                "model": "claude-3-5-sonnet-20240620",  # Corrected to a valid Claude model ID
                 "max_tokens": 1000,
                 "messages": [
                     {"role": "user", "content": prompts[pattern_type]}
@@ -206,11 +212,9 @@ async def narrate_with_ai(pattern_type: str, raw_data: list) -> str:
 
 @router.post("/analyze", status_code=201)
 async def analyze(
-    x_api_key: str = Header(...),
+    app: App = Depends(get_app_from_token),
     db: Session = Depends(get_db)
 ):
-    app = get_app(x_api_key, db)
-
     patterns = {
         "churn_risk": detect_churn_risk(db, app.id),
         "dead_features": detect_dead_features(db, app.id),
@@ -253,15 +257,12 @@ async def analyze(
             continue
 
         # --- UPSERT LOGIC STARTS HERE ---
-
-        # 1. Check if this type of insight already exists for this app
         existing_insight = db.query(Insight).filter(
             Insight.app_id == app.id,
             Insight.insight_type == pattern_type
         ).first()
 
         if existing_insight:
-            # 2. Update the existing record with fresh data
             existing_insight.body = ai_body
             existing_insight.raw_data = raw_list
             existing_insight.severity = severity_map[pattern_type]
@@ -269,7 +270,6 @@ async def analyze(
             existing_insight.created_at = datetime.now(
                 timezone.utc)  # Bump timestamp to now
         else:
-            # 3. Create a new record if one doesn't exist
             insight = Insight(
                 app_id=app.id,
                 insight_type=pattern_type,
@@ -279,7 +279,6 @@ async def analyze(
                 raw_data=raw_list,
             )
             db.add(insight)
-
         # --- UPSERT LOGIC ENDS HERE ---
 
         generated.append({
@@ -287,7 +286,6 @@ async def analyze(
             "severity": severity_map[pattern_type],
             "title": titles[pattern_type],
             "body": ai_body,
-            # Optional: lets the frontend know if it was an update
             "was_updated": bool(existing_insight)
         })
 
@@ -304,11 +302,9 @@ async def analyze(
 
 @router.get("/")
 def get_insights(
-    x_api_key: str = Header(...),
+    app: App = Depends(get_app_from_token),
     db: Session = Depends(get_db)
 ):
-    app = get_app(x_api_key, db)
-
     insights = db.query(Insight).filter(
         Insight.app_id == app.id
     ).order_by(Insight.created_at.desc()).all()
