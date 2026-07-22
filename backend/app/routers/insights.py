@@ -33,7 +33,7 @@ def get_app_from_token(authorization: str = Header(...), db: Session = Depends(g
             status_code=401, detail="Invalid or expired session token")
 
     app = db.query(App).filter(App.owner_email ==
-                               email, App.is_active == True).first()
+                               email).first()
     if not app:
         raise HTTPException(
             status_code=404, detail="App not found for this user")
