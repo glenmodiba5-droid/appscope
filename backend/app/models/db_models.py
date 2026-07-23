@@ -15,7 +15,7 @@ class App(Base):
     name = Column(String)
     owner_email = Column(String, unique=True, index=True)
     api_key = Column(String, unique=True, index=True)
-    hashed_password = Column(String)  # <--- ADD THIS LINE!
+    hashed_password = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
@@ -33,7 +33,9 @@ class TrackedUser(Base):
     __tablename__ = "tracked_users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    app_id = Column(UUID(as_uuid=True), ForeignKey("apps.id"), nullable=False)
+    # CHANGED: Now an Integer to match apps.id
+    app_id = Column(Integer, ForeignKey("apps.id"), nullable=False)
+
     # hashed ID from client's app
     user_id = Column(String(255), nullable=False)
     first_seen = Column(DateTime(timezone=True), server_default=func.now())
@@ -71,7 +73,8 @@ class Event(Base):
     __tablename__ = "events"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    app_id = Column(UUID(as_uuid=True), ForeignKey("apps.id"), nullable=False)
+    # CHANGED: Now an Integer to match apps.id
+    app_id = Column(Integer, ForeignKey("apps.id"), nullable=False)
     tracked_user_id = Column(UUID(as_uuid=True), ForeignKey(
         "tracked_users.id"), nullable=False)
     session_id = Column(String(255), nullable=False)
@@ -103,7 +106,8 @@ class Insight(Base):
     __tablename__ = "insights"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    app_id = Column(UUID(as_uuid=True), ForeignKey("apps.id"), nullable=False)
+    # CHANGED: Now an Integer to match apps.id
+    app_id = Column(Integer, ForeignKey("apps.id"), nullable=False)
     # "churn_risk", "dead_feature", "friction_point"
     insight_type = Column(String(100), nullable=False)
     # "critical", "warning", "info"
@@ -133,7 +137,8 @@ class Session(Base):
     __tablename__ = "sessions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    app_id = Column(UUID(as_uuid=True), ForeignKey("apps.id"), nullable=False)
+    # CHANGED: Now an Integer to match apps.id
+    app_id = Column(Integer, ForeignKey("apps.id"), nullable=False)
     tracked_user_id = Column(UUID(as_uuid=True), ForeignKey(
         "tracked_users.id"), nullable=False)
     session_id = Column(String(255), unique=True, nullable=False)
