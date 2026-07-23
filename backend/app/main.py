@@ -84,41 +84,73 @@ def regenerate_api_key(email: str = Depends(get_current_user_email), db: Session
 # ==========================================
 # PUBLIC TRACKING SCRIPT
 # ==========================================
-
-
 @app.get("/track.js")
 def serve_tracker():
     js_code = """
 (function() {
+    // Generate simple IDs for the browser session
+    const getOrSetId = (key) => {
+        let id = localStorage.getItem(key);
+        if (!id) {
+            id = crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem(key, id);
+        }
+        return id;
+    };
+
+    const userId = getOrSetId('appscope_uid');
+    const sessionId = getOrSetId('appscope_sid'); 
+
     window.AppScope = window.AppScope || function() {
         (window.AppScope.q = window.AppScope.q || []).push(arguments);
     };
 
-    window.AppScope.init = function(config) {
-        window.AppScope.apiKey = config.apiKey;
-        
-        // Automatically fire an initial pageview event on load
-        fetch("https://appscope-h6mz.onrender.com/events/", {
+    window.AppScope.init = function(apiKey) {
+        window.AppScope.apiKey = apiKey;
+    };
+
+    window.AppScope.track = function(eventName) {
+        if (!window.AppScope.apiKey) return;
+
+        // Fix 1: Point to /events/track
+        fetch("https://appscope-h6mz.onrender.com/events/track", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+                "Content-Type": "application/json",
+                // Fix 2: API key goes in the headers
+                "x-api-key": window.AppScope.apiKey  
+            },
+            // Fix 3: Structure matches Pydantic exactly
             body: JSON.stringify({
-                api_key: window.AppScope.apiKey,
-                event_type: "pageview",
-                path: window.location.pathname,
-                timestamp: new Date().toISOString()
+                user_id: userId,
+                session_id: sessionId,
+                event_name: eventName,
+                event_category: eventName === "pageview" ? "navigation" : "engagement",
+                timestamp: new Date().toISOString(),
+                properties: {
+                    page: window.location.pathname
+                },
+                context: {
+                    device_type: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop",
+                    browser: navigator.userAgent
+                }
             })
         }).catch(err => console.error("AppScope dispatch error:", err));
     };
 
-    // Process any early queued commands
-    if (window.AppScope.q) {
+    // Process any commands queued before this script loaded
+    if (window.AppScope.q && Array.isArray(window.AppScope.q)) {
         const queue = window.AppScope.q;
         window.AppScope.q = [];
-        queue.forEach(args => window.AppScope[args[0]] && window.AppScope[args[0]](args[1]));
+        queue.forEach(args => {
+            if (args[0] === 'init') window.AppScope.init(args[1]);
+            if (args[0] === 'track') window.AppScope.track(args[1]);
+        });
     }
 })();
     """
     return Response(content=js_code, media_type="application/javascript")
+
 # 4. BASE ROUTES
 
 

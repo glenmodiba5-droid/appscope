@@ -128,8 +128,7 @@ def track_event(
     db: Session = Depends(get_db)
 ):
     app = db.query(App).filter(
-        App.api_key == x_api_key,
-        App.is_active == True
+        App.api_key == x_api_key
     ).first()
 
     if not app:

@@ -833,6 +833,50 @@
       transform: translateY(0);
     }
 
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .modal-content {
+      background: var(--white);
+      padding: 24px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 550px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .btn-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--slate-400);
+      transition: color 0.15s;
+    }
+
+    .btn-close:hover {
+      color: var(--rose);
+    }
+
     /* Mobile styles minimized for brevity but preserved */
     @media (max-width: 1024px) {
       .two-col {
@@ -1039,6 +1083,15 @@
           <div class="page-sub" id="overviewSub">Loading your app data...</div>
         </div>
         <div class="header-actions">
+          <!-- NEW BUTTON -->
+          <button class="btn btn-primary" onclick="showInstallModal()" style="background: var(--navy);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+            Install Snippet
+          </button>
+
           <button class="btn btn-ghost" onclick="refreshData()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <polyline points="23 4 23 10 17 10" />
@@ -1057,7 +1110,7 @@
 
       <div class="content">
 
-        <!-- NEW: Empty State Setup Card -->
+        <!-- Empty State Setup Card -->
         <div id="setupCard" class="setup-card" style="display: none;">
           <h3>
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--indigo)" stroke-width="2"
@@ -1067,7 +1120,8 @@
             Awaiting Data: Install Your Tracking Code
           </h3>
           <p>We haven't received any events yet. Copy and paste this snippet right before the closing
-            <code>&lt;/body&gt;</code> tag of your website.</p>
+            <code>&lt;/body&gt;</code> tag of your website.
+          </p>
           <div class="code-block">
             <pre><code id="tracking-snippet">Loading snippet...</code></pre>
             <button onclick="copySnippet()" class="btn-copy">Copy Code</button>
@@ -1193,6 +1247,32 @@
     </div>
 
   </main>
+
+  <!-- Permanent Installation Modal -->
+  <div id="installModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="display: flex; align-items: center; gap: 8px; color: var(--navy);">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--indigo)" stroke-width="2"
+            stroke-linecap="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+          </svg>
+          Install AppScope Tracking
+        </h3>
+        <button onclick="closeInstallModal()" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 13.5px; color: var(--slate-500); margin-bottom: 16px;">Copy and paste this snippet right
+          before the closing <code>&lt;/body&gt;</code> tag of your website to start tracking instantly.</p>
+        <div class="code-block"
+          style="background: var(--navy); border-radius: 8px; padding: 16px; display: flex; align-items: flex-start; justify-content: space-between;">
+          <pre><code id="modal-tracking-snippet" style="color: #A5B4FC; font-family: monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all;">Loading snippet...</code></pre>
+          <button onclick="copyModalSnippet()" class="btn-copy"
+            style="background: rgba(255,255,255,0.15); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; flex-shrink: 0; margin-left: 12px;">Copy</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="toast" id="toast"></div>
 
@@ -1356,6 +1436,24 @@
       navigator.clipboard.writeText(snippet).then(() => {
         showToast("Tracking snippet copied to clipboard! 📋");
       });
+    }
+
+    // ── Modal Logic ──
+    function showInstallModal() {
+      const apiKey = overviewData?.api_key || 'YOUR_API_KEY';
+      const snippetText = `<script>\n  window.AppScope = window.AppScope || function(){(AppScope.q=AppScope.q||[]).push(arguments)};\n  AppScope('init', '${apiKey}');\n  AppScope('track', 'pageview');\n<\/script>\n<script async src="${BASE_URL}/track.js"><\/script>`;
+
+      document.getElementById('modal-tracking-snippet').textContent = snippetText;
+      document.getElementById('installModal').style.display = 'flex';
+    }
+
+    function closeInstallModal() {
+      document.getElementById('installModal').style.display = 'none';
+    }
+
+    function copyModalSnippet() {
+      const snippet = document.getElementById('modal-tracking-snippet').textContent;
+      navigator.clipboard.writeText(snippet).then(() => showToast("Snippet copied to clipboard! 📋"));
     }
 
     function logout() { localStorage.removeItem('appscope_token'); window.location.href = 'login.html'; }
