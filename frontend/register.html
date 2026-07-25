@@ -458,6 +458,67 @@
     .warning-note strong {
       color: var(--slate-600);
     }
+
+    /* ── Responsive Mobile Optimization ── */
+    @media (max-width: 860px) {
+      .page {
+        grid-template-columns: 1fr;
+        max-width: 500px;
+        min-height: auto;
+      }
+
+      .left {
+        padding: 40px 32px;
+      }
+
+      .right {
+        padding: 40px 32px;
+      }
+
+      /* Reduce the size of background decorative elements on medium screens */
+      .left::before {
+        width: 200px;
+        height: 200px;
+        top: -40px;
+        right: -40px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 16px;
+      }
+
+      .page {
+        border-radius: 12px;
+      }
+
+      .left {
+        padding: 32px 20px;
+      }
+
+      .right {
+        padding: 32px 20px;
+      }
+
+      .left-headline {
+        font-size: 22px;
+        margin-top: 24px;
+      }
+
+      .left-sub {
+        font-size: 13px;
+        margin-bottom: 24px;
+      }
+
+      .feature-text {
+        font-size: 12px;
+      }
+
+      .left-footer {
+        margin-top: 24px;
+      }
+    }
   </style>
 </head>
 
@@ -720,6 +781,12 @@
       debug: false,
     });
   </script>
+  <script>
+    window.AppScope = window.AppScope || function () { (AppScope.q = AppScope.q || []).push(arguments) };
+    AppScope('init', 'as_live_347a90060fa79a08f6b7e7d822c6c9d2');
+    AppScope('track', 'pageview');
+  </script>
+  <script async src="https://appscope-h6mz.onrender.com/track.js"></script>
 
 </body>
 

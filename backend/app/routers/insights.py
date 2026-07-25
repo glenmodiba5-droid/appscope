@@ -183,7 +183,7 @@ async def narrate_with_ai(pattern_type: str, raw_data: list) -> str:
                 "anthropic-version": "2023-06-01"
             },
             json={
-                "model": "claude-3-5-sonnet-20240620",  # Corrected to a valid Claude model ID
+                "model": "claude-sonnet-4-6",
                 "max_tokens": 1000,
                 "messages": [
                     {"role": "user", "content": prompts[pattern_type]}
